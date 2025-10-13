@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TaskStatus;
+use App\Services\TaskDependencyService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -52,45 +53,59 @@ class Task extends Model
 
     /**
      * Get all dependent tasks recursively (tasks that depend on this task)
+     * Uses optimized CTE query for better performance
      */
     public function getAllDependentTasks(): Collection
     {
-        $dependentTasks = collect();
-
-        // Find all direct dependents
-        $directDependents = Task::whereHas('dependencies', function ($query) {
-            $query->where('dependency_task_id', $this->id);
-        })->get();
-
-        foreach ($directDependents as $dependent) {
-            $dependentTasks->push($dependent);
-            // Recursively get all dependents
-            $dependentTasks = $dependentTasks->merge($dependent->getAllDependentTasks());
-        }
-
-        return new Collection($dependentTasks->unique('id')->values());
+        return app(TaskDependencyService::class)->getAllDependentTasks($this->id);
     }
 
     /**
      * Get all dependency tasks with their details
+     * Uses optimized single query with caching
      */
-    public function getDependencyTasks()
+    public function getDependencyTasks(): Collection
     {
-        return $this->dependencies()
-            ->with('dependencyTask')
-            ->get()
-            ->map(fn($dep) => $dep->dependencyTask);
+        return app(TaskDependencyService::class)->getDependencyTasks($this->id);
     }
 
     /**
      * Check if all dependencies are completed
+     * Uses optimized query with caching
      */
     public function areDependenciesCompleted(): bool
     {
-        return !$this->dependencies()
-            ->whereHas('dependencyTask', function ($query) {
-                $query->where('status', '!=', TaskStatus::COMPLETED->value);
-            })
-            ->exists();
+        return app(TaskDependencyService::class)->areDependenciesCompleted($this->id);
+    }
+
+    /**
+     * Get dependency hierarchy for this task
+     */
+    public function getDependencyHierarchy(): array
+    {
+        return app(TaskDependencyService::class)->getDependencyHierarchy($this->id);
+    }
+
+    /**
+     * Clear dependency cache when task is updated
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (Task $task) {
+            // Clear cache when task status changes
+            if ($task->isDirty('status')) {
+                app(TaskDependencyService::class)->clearTaskCache($task->id);
+                
+                // Also clear cache for dependent tasks
+                $dependentTasks = $task->getAllDependentTasks();
+                foreach ($dependentTasks as $dependentTask) {
+                    app(TaskDependencyService::class)->clearTaskCache($dependentTask->id);
+                }
+            }
+        });
+
+        static::deleted(function (Task $task) {
+            app(TaskDependencyService::class)->clearTaskCache($task->id);
+        });
     }
 }

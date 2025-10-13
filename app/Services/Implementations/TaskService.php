@@ -8,6 +8,7 @@ use App\Models\Task;
 use App\Models\TaskDependency;
 use App\Models\User;
 use App\Services\Interfaces\TaskServiceInterface;
+use App\Services\TaskDependencyService;
 use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,8 +17,10 @@ use Log;
 
 class TaskService implements TaskServiceInterface
 {
-    public function __construct(protected TaskFilterAction $taskFilterAction)
-    {
+    public function __construct(
+        protected TaskFilterAction $taskFilterAction,
+        protected TaskDependencyService $dependencyService
+    ) {
     }
     public function createTask(array $data): Task
     {
@@ -93,13 +96,21 @@ class TaskService implements TaskServiceInterface
     public function getTasks(): Collection
     {
         $query = Task::query()->with([
-            'assignee:id,name,email',
-            'dependencies:id,title,status'
+            'assignee:id,name,email'
         ]);
 
-        $tasks = $this->taskFilterAction->handle($query);
+        $tasks = $this->taskFilterAction->handle($query)->get();
+        
+        // Batch check dependencies completion for better performance
+        $taskIds = $tasks->pluck('id')->toArray();
+        $dependencyStatus = $this->dependencyService->batchCheckDependenciesCompleted($taskIds);
+        
+        // Add dependency completion status to each task
+        $tasks->each(function ($task) use ($dependencyStatus) {
+            $task->dependencies_completed = $dependencyStatus[$task->id] ?? true;
+        });
 
-        return $tasks->get();
+        return $tasks;
     }
 
     public function getTask(string $id): Task
@@ -150,6 +161,11 @@ class TaskService implements TaskServiceInterface
             $task->dependencies()->create([
                 'dependency_task_id' => $dependencyTaskId
             ]);
+            
+            // Clear cache for affected tasks
+            $this->dependencyService->clearTaskCache($taskId);
+            $this->dependencyService->clearTaskCache($dependencyTaskId);
+            
             Log::info('Task dependency added successfully', [
                 'task_id' => $taskId,
                 'dependency_task_id' => $dependencyTaskId,
@@ -182,6 +198,11 @@ class TaskService implements TaskServiceInterface
         DB::beginTransaction();
         try {
             $dependency->delete();
+            
+            // Clear cache for affected tasks
+            $this->dependencyService->clearTaskCache($taskId);
+            $this->dependencyService->clearTaskCache($dependencyTaskId);
+            
             Log::info('Task dependency removed successfully', [
                 'task_id' => $taskId,
                 'dependency_task_id' => $dependencyTaskId,
