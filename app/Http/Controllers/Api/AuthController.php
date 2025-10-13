@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
 use App\Services\Interfaces\AuthServiceInterface;
+use App\Traits\ResponseTrait;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Log;
@@ -12,13 +13,22 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    use ResponseTrait;
     public function __construct(private AuthServiceInterface $authService)
     {
     }
 
     public function register(RegisterRequest $request)
     {
-        $this->authService->register($request->email, $request->password, $request->name, $request->role, $request->device_token);
+        $result = $this->authService->register(
+            $request->email,
+            $request->password,
+            $request->name,
+            $request->role,
+            $request->device_token ?? null
+        );
+
+        return $this->success201($result, 'User registered successfully');
     }
 
     public function login(Request $request)
@@ -35,8 +45,9 @@ class AuthController extends Controller
         }
     }
 
-    public function logout(Request $request)
+    public function logout()
     {
         $this->authService->logout(JWTAuth::getToken());
+        return $this->success200(null, 'Logged out successfully');
     }
 }
