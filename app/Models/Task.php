@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Task extends Model
 {
@@ -52,23 +53,36 @@ class Task extends Model
 
     /**
      * Get all dependent tasks recursively (tasks that depend on this task)
+     * Optimized to use a single recursive CTE query instead of N+1 queries
      */
     public function getAllDependentTasks(): Collection
     {
-        $dependentTasks = collect();
+        // Use recursive CTE to get all dependent tasks in a single query
+        $results = DB::select("
+            WITH RECURSIVE dependent_tasks AS (
+                -- Base case: direct dependents
+                SELECT task_id
+                FROM task_dependencies
+                WHERE dependency_task_id = ?
+                
+                UNION
+                
+                -- Recursive case: dependents of dependents
+                SELECT td.task_id
+                FROM task_dependencies td
+                INNER JOIN dependent_tasks dt ON td.dependency_task_id = dt.task_id
+            )
+            SELECT DISTINCT task_id FROM dependent_tasks
+        ", [$this->id]);
 
-        // Find all direct dependents
-        $directDependents = Task::whereHas('dependencies', function ($query) {
-            $query->where('dependency_task_id', $this->id);
-        })->get();
+        $taskIds = array_map(fn($row) => $row->task_id, $results);
 
-        foreach ($directDependents as $dependent) {
-            $dependentTasks->push($dependent);
-            // Recursively get all dependents
-            $dependentTasks = $dependentTasks->merge($dependent->getAllDependentTasks());
+        if (empty($taskIds)) {
+            return new Collection([]);
         }
 
-        return new Collection($dependentTasks->unique('id')->values());
+        // Fetch all tasks in a single query
+        return Task::whereIn('id', $taskIds)->get();
     }
 
     /**
@@ -84,13 +98,17 @@ class Task extends Model
 
     /**
      * Check if all dependencies are completed
+     * Optimized to use a single join query instead of subqueries
      */
     public function areDependenciesCompleted(): bool
     {
-        return !$this->dependencies()
-            ->whereHas('dependencyTask', function ($query) {
-                $query->where('status', '!=', TaskStatus::COMPLETED->value);
-            })
-            ->exists();
+        // Use a single query with a join to check if any incomplete dependencies exist
+        $incompleteCount = DB::table('task_dependencies')
+            ->join('tasks', 'task_dependencies.dependency_task_id', '=', 'tasks.id')
+            ->where('task_dependencies.task_id', $this->id)
+            ->where('tasks.status', '!=', TaskStatus::COMPLETED->value)
+            ->count();
+
+        return $incompleteCount === 0;
     }
 }
