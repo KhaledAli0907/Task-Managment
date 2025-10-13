@@ -3,7 +3,7 @@
 namespace App\Actions\Tasks;
 
 use Illuminate\Database\Eloquent\Builder;
-use Request;
+use Illuminate\Http\Request;
 
 class TaskFilterAction
 {

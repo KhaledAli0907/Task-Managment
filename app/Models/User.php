@@ -50,6 +50,16 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
+    public function isManager(): bool
+    {
+        return $this->hasRole('manager');
+    }
+
+    public function isUser(): bool
+    {
+        return $this->hasRole('user');
+    }
+
     public function getJWTIdentifier()
     {
         return $this->getKey();

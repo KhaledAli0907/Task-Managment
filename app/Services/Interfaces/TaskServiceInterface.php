@@ -15,13 +15,11 @@ interface TaskServiceInterface
      *                    - title (string): The title of the task
      *                    - description (string): Detailed description of the task
      *                    - due_date (string): Due date in Y-m-d format
-     *                    - priority (int): Priority level (1-5)
      *                    - assigned_to (int): User ID of assignee
      *                    - status (string): Current status of the task
      * @return Task The newly created task instance
      */
     public function createTask(array $data): Task;
-
 
     public function getTasks(): Collection;
 
@@ -30,4 +28,12 @@ interface TaskServiceInterface
     public function updateTask(string $id, array $data): Task;
 
     public function deleteTask(string $id): void;
+
+    public function assignTask(string $id, int $assigneeId): void;
+
+    public function changeTaskStatus(string $id, string $status): void;
+
+    public function addTaskDependency(string $taskId, string $dependencyTaskId): void;
+
+    public function removeTaskDependency(string $taskId, string $dependencyTaskId): void;
 }

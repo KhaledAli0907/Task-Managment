@@ -10,6 +10,7 @@ trait ResponseTrait
             'data' => $data,
             'status' => 200,
             'message' => $message,
+            'success' => true,
         ], 200);
     }
 
@@ -19,6 +20,7 @@ trait ResponseTrait
             'data' => $data,
             'status' => 201,
             'message' => $message,
+            'success' => true,
         ], 201);
     }
 
@@ -46,6 +48,7 @@ trait ResponseTrait
             'status' => 401,
             'errors' => $errors,
             'message' => $message,
+            'success' => false,
         ], 401);
     }
 
@@ -55,6 +58,7 @@ trait ResponseTrait
             'errors' => $errors,
             'status' => 403,
             'message' => 'Forbidden',
+            'success' => false,
         ], 403);
     }
 
@@ -83,6 +87,7 @@ trait ResponseTrait
             'errors' => $errors,
             'status' => 500,
             'message' => $message,
+            'success' => false,
         ], 500);
     }
 }

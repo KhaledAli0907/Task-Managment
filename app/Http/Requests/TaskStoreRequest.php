@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use App\Enums\TaskStatus;
 
 class TaskStoreRequest extends FormRequest
 {
@@ -24,7 +26,7 @@ class TaskStoreRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|string|in:pending,in_progress,completed,cancelled',
+            'status' => ['required', 'string', Rule::in(TaskStatus::cases())],
             'completed' => 'boolean',
             'due_date' => 'nullable|date|after:now',
             'assignee_id' => 'nullable|exists:users,id'
@@ -42,7 +44,7 @@ class TaskStoreRequest extends FormRequest
             'title.required' => 'The task title is required.',
             'title.max' => 'The task title may not be greater than 255 characters.',
             'status.required' => 'The task status is required.',
-            'status.in' => 'The task status must be one of: pending, in_progress, completed, cancelled.',
+            'status.in' => 'The task status must be one of: ' . implode(', ', array_column(TaskStatus::cases(), 'value')) . '.',
             'due_date.date' => 'The due date must be a valid date.',
             'due_date.after' => 'The due date must be a future date.',
             'assignee_id.exists' => 'The selected assignee does not exist.'
