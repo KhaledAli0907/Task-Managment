@@ -44,7 +44,7 @@ class TaskAssignmentTest extends TestCase
         $response->assertStatus(403)
             ->assertJson([
                 'success' => false,
-                'errors' => 'You are not authorized to assign tasks'
+                'errors' => 'Insufficient permissions.'
             ]);
     }
 

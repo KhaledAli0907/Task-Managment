@@ -43,7 +43,7 @@ class TaskStatusUpdateTest extends TestCase
         $response->assertStatus(403)
             ->assertJson([
                 'success' => false,
-                'errors' => 'You can only update tasks assigned to you'
+                'errors' => 'You are not authorized to change the status of this task'
             ]);
     }
 
@@ -77,7 +77,8 @@ class TaskStatusUpdateTest extends TestCase
             'status' => TaskStatus::COMPLETED->value
         ], $this->withAuth($user));
 
-        $response->assertStatus(404);
+        // User gets 403 because they don't have permission, not 404
+        $response->assertStatus(403);
     }
 
     public function test_requires_authentication_for_status_update()

@@ -3,7 +3,9 @@
 namespace App\Services\Implementations;
 
 use App\Actions\Tasks\TaskFilterAction;
+use App\Actions\Tasks\TaskParentChildValidationAction;
 use App\Actions\Tasks\TaskStatusValidationAction;
+use App\Enums\PermissionEnum;
 use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\TaskDependency;
@@ -42,7 +44,7 @@ class TaskService implements TaskServiceInterface
         if (!$task) {
             throw new \InvalidArgumentException('Task not found');
         }
-        if (!auth()->user()->isManager()) {
+        if (!auth()->user()->can(PermissionEnum::TASK_ASSIGN->value)) {
             throw new \Exception('You are not authorized to assign tasks');
         }
         if (!User::find($assigneeId)) {
@@ -96,12 +98,22 @@ class TaskService implements TaskServiceInterface
 
     public function getTask(string $id): Task
     {
-        return Task::findOrFail($id)->with([
+        $query = Task::query()->where('id', $id)->with([
             'assignee:id,name,email',
             'parent:id,title',
             'children:id,title,status'
-        ])->first();
+        ]);
+
+        $tasks = $this->taskFilterAction->handle($query);
+        $task = $tasks->first();
+
+        if (!$task) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Task not found or you are not authorized to view it');
+        }
+
+        return $task;
     }
+
 
     public function updateTask(string $id, array $data): Task
     {
@@ -115,6 +127,27 @@ class TaskService implements TaskServiceInterface
             DB::rollBack();
             Log::error('Failed to update task', ['error' => $e->getMessage(), 'manager' => auth()->user()->name, 'ip' => request()->ip()]);
             throw new \Exception('Failed to update task');
+        }
+        return $task;
+    }
+
+    public function updateTaskStatus(string $id, string $status): Task
+    {
+        $task = Task::findOrFail($id);
+
+        // Validate task status update
+        app(TaskStatusValidationAction::class)->handle($task, $status);
+
+        DB::beginTransaction();
+        try {
+            $task->status = $status;
+            $task->save();
+            Log::info('Task status updated successfully', ['task' => $task, 'user' => auth()->user()->name, 'ip' => request()->ip()]);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update task status', ['error' => $e->getMessage(), 'user' => auth()->user()->name, 'ip' => request()->ip()]);
+            throw new \Exception('Failed to update task status');
         }
         return $task;
     }
@@ -146,7 +179,7 @@ class TaskService implements TaskServiceInterface
                 foreach ($childrenData as $childData) {
                     $childData['parent_task_id'] = $parentTask->id;
                     $childTask = Task::create($childData);
-                    $childTask->validateParentChildRelationship();
+                    app(TaskParentChildValidationAction::class)->handle($childTask);
                 }
             }
 
@@ -185,7 +218,7 @@ class TaskService implements TaskServiceInterface
         try {
             $childData['parent_task_id'] = $parentTaskId;
             $childTask = Task::create($childData);
-            $childTask->validateParentChildRelationship();
+            app(TaskParentChildValidationAction::class)->handle($childTask);
 
             Log::info('Child task added successfully', [
                 'parent_task_id' => $parentTaskId,

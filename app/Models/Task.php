@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
@@ -30,7 +32,8 @@ class Task extends Model
         }
         $this->attributes['status'] = $status;
     }
-    public function assignee()
+
+    public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assignee_id');
     }
@@ -38,7 +41,7 @@ class Task extends Model
     /**
      * Get the parent task of this task
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'parent_task_id');
     }
@@ -46,7 +49,7 @@ class Task extends Model
     /**
      * Get all child tasks of this task
      */
-    public function children()
+    public function children(): HasMany
     {
         return $this->hasMany(Task::class, 'parent_task_id');
     }
@@ -81,19 +84,4 @@ class Task extends Model
             ->exists();
     }
 
-    /**
-     * Validate parent-child relationship constraints
-     */
-    public function validateParentChildRelationship(): void
-    {
-        // Prevent self-reference
-        if ($this->parent_task_id === $this->id) {
-            throw new \InvalidArgumentException('Task cannot be its own parent');
-        }
-
-        // Prevent children from having their own children (no nesting)
-        if ($this->parent_task_id && $this->children()->exists()) {
-            throw new \InvalidArgumentException('Child tasks cannot have their own children');
-        }
-    }
 }

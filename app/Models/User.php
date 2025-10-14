@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\PermissionEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -60,6 +61,42 @@ class User extends Authenticatable implements JWTSubject
     public function isUser(): bool
     {
         return $this->hasRole('user');
+    }
+
+    // Permission-based helper methods
+    public function canCreateTasks(): bool
+    {
+        return $this->can(PermissionEnum::TASK_CREATE->value);
+    }
+
+    public function canReadTasks(): bool
+    {
+        return $this->can(PermissionEnum::TASK_READ->value);
+    }
+
+    public function canUpdateTasks(): bool
+    {
+        return $this->can(PermissionEnum::TASK_UPDATE->value);
+    }
+
+    public function canDeleteTasks(): bool
+    {
+        return $this->can(PermissionEnum::TASK_DELETE->value);
+    }
+
+    public function canAssignTasks(): bool
+    {
+        return $this->can(PermissionEnum::TASK_ASSIGN->value);
+    }
+
+    public function canUpdateTaskStatus(): bool
+    {
+        return $this->can(PermissionEnum::TASK_STATUS_UPDATE->value);
+    }
+
+    public function canManageTaskChildren(): bool
+    {
+        return $this->can(PermissionEnum::TASK_MANAGE_CHILDREN->value);
     }
 
     public function getJWTIdentifier()

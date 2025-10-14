@@ -27,6 +27,8 @@ interface TaskServiceInterface
 
     public function updateTask(string $id, array $data): Task;
 
+    public function updateTaskStatus(string $id, string $status): Task;
+
     public function deleteTask(string $id): void;
 
     public function assignTask(string $id, int $assigneeId): void;

@@ -2,9 +2,11 @@
 
 namespace Tests;
 
+use App\Enums\PermissionEnum;
 use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -20,13 +22,36 @@ abstract class TestCase extends BaseTestCase
         $this->app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
         $this->app['config']->set('jwt.secret', 'test-secret-key-for-jwt-that-is-long-enough-for-256-bits');
 
-        // Create roles if they don't exist
-        if (!Role::where('name', 'manager')->where('guard_name', 'api')->exists()) {
-            Role::create(['name' => 'manager', 'guard_name' => 'api']);
+        // Create permissions
+        $this->createPermissions();
+
+        // Create roles and assign permissions
+        $this->createRolesWithPermissions();
+    }
+
+    protected function createPermissions(): void
+    {
+        $permissions = PermissionEnum::getAllValues();
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'api',
+            ]);
         }
-        if (!Role::where('name', 'user')->where('guard_name', 'api')->exists()) {
-            Role::create(['name' => 'user', 'guard_name' => 'api']);
-        }
+    }
+
+    protected function createRolesWithPermissions(): void
+    {
+        // Create manager role with all task permissions
+        $managerRole = Role::firstOrCreate(['name' => 'manager', 'guard_name' => 'api']);
+        $managerPermissions = PermissionEnum::getManagerPermissions();
+        $managerRole->syncPermissions($managerPermissions);
+
+        // Create user role with limited permissions
+        $userRole = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'api']);
+        $userPermissions = PermissionEnum::getUserPermissions();
+        $userRole->syncPermissions($userPermissions);
     }
 
 
