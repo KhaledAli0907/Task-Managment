@@ -26,8 +26,13 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/documentation",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "documentation"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documentation"
+                            ]
                         }
                     }
                 }
@@ -54,8 +59,13 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/oauth2-callback",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "oauth2-callback"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "oauth2-callback"
+                            ]
                         }
                     }
                 }
@@ -85,8 +95,14 @@
                                 ],
                                 "url": {
                                     "raw": "{{base_url}}/api/auth/register",
-                                    "host": ["{{base_url}}"],
-                                    "path": ["api", "auth", "register"]
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "register"
+                                    ]
                                 },
                                 "body": {
                                     "mode": "raw",
@@ -118,8 +134,14 @@
                                 ],
                                 "url": {
                                     "raw": "{{base_url}}/api/auth/login",
-                                    "host": ["{{base_url}}"],
-                                    "path": ["api", "auth", "login"]
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "login"
+                                    ]
                                 }
                             }
                         }
@@ -146,8 +168,14 @@
                                 ],
                                 "url": {
                                     "raw": "{{base_url}}/api/auth/logout",
-                                    "host": ["{{base_url}}"],
-                                    "path": ["api", "auth", "logout"]
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "logout"
+                                    ]
                                 },
                                 "auth": {
                                     "type": "bearer",
@@ -185,8 +213,13 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task"
+                            ]
                         },
                         "body": {
                             "mode": "raw",
@@ -222,8 +255,13 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task"
+                            ]
                         },
                         "auth": {
                             "type": "bearer",
@@ -254,8 +292,14 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task/{id}",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task", "{id}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task",
+                                "{id}"
+                            ]
                         },
                         "auth": {
                             "type": "bearer",
@@ -286,8 +330,14 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task/{id}",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task", "{id}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task",
+                                "{id}"
+                            ]
                         },
                         "body": {
                             "mode": "raw",
@@ -323,8 +373,14 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task/{id}",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task", "{id}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task",
+                                "{id}"
+                            ]
                         },
                         "auth": {
                             "type": "bearer",
@@ -361,7 +417,9 @@
                                         ],
                                         "url": {
                                             "raw": "{{base_url}}/api/task/{id}/assign",
-                                            "host": ["{{base_url}}"],
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
                                             "path": [
                                                 "api",
                                                 "task",
@@ -403,7 +461,9 @@
                                         ],
                                         "url": {
                                             "raw": "{{base_url}}/api/task/{id}/status",
-                                            "host": ["{{base_url}}"],
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
                                             "path": [
                                                 "api",
                                                 "task",
@@ -445,7 +505,9 @@
                                         ],
                                         "url": {
                                             "raw": "{{base_url}}/api/task/{id}/dependencies",
-                                            "host": ["{{base_url}}"],
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
                                             "path": [
                                                 "api",
                                                 "task",
@@ -494,7 +556,9 @@
                                 ],
                                 "url": {
                                     "raw": "{{base_url}}/api/task/dependencies/{childId}",
-                                    "host": ["{{base_url}}"],
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
                                     "path": [
                                         "api",
                                         "task",
