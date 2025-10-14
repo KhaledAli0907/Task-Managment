@@ -54,10 +54,24 @@ class TaskDependencyPerformanceCommand extends Command
         $this->info('Task Dependency Statistics');
         $this->line('==========================');
 
+        // Show database compatibility first
+        $compatibility = $this->dependencyService->getDatabaseCompatibility();
+        $this->table(
+            ['Database Info', 'Value'],
+            [
+                ['Database Type', $compatibility['type']],
+                ['Version', $compatibility['version']],
+                ['CTE Support', $compatibility['supports_cte'] ? '✅ Yes' : '❌ No'],
+                ['CTE Detected', $compatibility['cte_support_detected'] ? '✅ Active' : '❌ Using Fallback'],
+                ['Window Functions', $compatibility['supports_window_functions'] ? '✅ Yes' : '❌ No'],
+            ]
+        );
+
+        $this->line('');
         $stats = $this->dependencyService->getDependencyStats();
         
         $this->table(
-            ['Metric', 'Value'],
+            ['Dependency Metric', 'Value'],
             [
                 ['Tasks with Dependencies', $stats['tasks_with_dependencies']],
                 ['Total Dependencies', $stats['total_dependencies']],

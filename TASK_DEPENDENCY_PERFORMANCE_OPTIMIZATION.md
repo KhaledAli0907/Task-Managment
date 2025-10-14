@@ -205,32 +205,56 @@ php artisan test tests/Unit/TaskDependencyServiceTest.php
 php artisan test --filter=Task
 ```
 
+## Database Compatibility
+
+### Supported Versions:
+- ✅ **MariaDB 10.2+** (Full CTE optimization)
+- ✅ **MySQL 8.0+** (Full CTE optimization)  
+- ⚡ **MariaDB < 10.2** (Fallback mode with good performance)
+- ⚡ **MySQL < 8.0** (Fallback mode with good performance)
+
+### Automatic Detection:
+The system automatically detects database capabilities and uses the optimal approach:
+- **CTE Mode**: Maximum performance with recursive queries
+- **Fallback Mode**: Optimized iterative algorithms with caching
+
+### Check Your Database:
+```bash
+php artisan task:dependency-performance --stats
+```
+
 ## Migration Guide
 
 ### For Existing Applications:
 
-1. **Run the migration**:
+1. **Check database compatibility**:
+   ```bash
+   php artisan task:dependency-performance --stats
+   ```
+
+2. **Run the migration**:
    ```bash
    php artisan migrate
    ```
 
-2. **Update service dependencies**:
+3. **Update service dependencies**:
    - TaskService now requires TaskDependencyService injection
    - ValidateDependencyBeforeAdding updated for new service
 
-3. **Configure caching**:
+4. **Configure caching**:
    - Ensure Redis is configured for optimal performance
    - Consider cache warming for frequently accessed tasks
 
-4. **Monitor performance**:
+5. **Monitor performance**:
    ```bash
-   php artisan task:dependency-performance --stats
+   php artisan task:dependency-performance --benchmark
    ```
 
 ### Backward Compatibility:
 - All existing API endpoints remain unchanged
 - Task model methods maintain same signatures
 - Database schema changes are additive only
+- Automatic fallback for older database versions
 
 ## Best Practices
 

@@ -12,13 +12,28 @@ class TaskDependencyService
 {
     private const CACHE_TTL = 3600; // 1 hour
     private const CACHE_PREFIX = 'task_dependencies:';
+    
+    private ?bool $supportsCTE = null;
+    private ?TaskDependencyCompatibilityService $compatibilityService = null;
 
     /**
-     * Get all dependent tasks recursively using optimized CTE query
+     * Get all dependent tasks recursively using optimized CTE query or fallback
      */
     public function getAllDependentTasks(string $taskId): Collection
     {
-        $cacheKey = self::CACHE_PREFIX . "dependents:{$taskId}";
+        if ($this->supportsCTE()) {
+            return $this->getAllDependentTasksCTE($taskId);
+        } else {
+            return $this->getCompatibilityService()->getAllDependentTasksFallback($taskId);
+        }
+    }
+
+    /**
+     * Get all dependent tasks using CTE (for MySQL 8+ and MariaDB 10.2+)
+     */
+    private function getAllDependentTasksCTE(string $taskId): Collection
+    {
+        $cacheKey = self::CACHE_PREFIX . "dependents_cte:{$taskId}";
         
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($taskId) {
             // Use Common Table Expression (CTE) for efficient recursive query
@@ -91,9 +106,21 @@ class TaskDependencyService
     }
 
     /**
-     * Optimized circular dependency check using CTE
+     * Optimized circular dependency check using CTE or fallback
      */
     public function wouldCreateCircularDependency(string $taskId, string $dependencyTaskId): bool
+    {
+        if ($this->supportsCTE()) {
+            return $this->wouldCreateCircularDependencyCTE($taskId, $dependencyTaskId);
+        } else {
+            return $this->getCompatibilityService()->wouldCreateCircularDependencyFallback($taskId, $dependencyTaskId);
+        }
+    }
+
+    /**
+     * CTE-based circular dependency check (for MySQL 8+ and MariaDB 10.2+)
+     */
+    private function wouldCreateCircularDependencyCTE(string $taskId, string $dependencyTaskId): bool
     {
         // Use CTE to find all tasks that the dependency task depends on
         $sql = "
@@ -125,7 +152,19 @@ class TaskDependencyService
      */
     public function getDependencyHierarchy(string $taskId): array
     {
-        $cacheKey = self::CACHE_PREFIX . "hierarchy:{$taskId}";
+        if ($this->supportsCTE()) {
+            return $this->getDependencyHierarchyCTE($taskId);
+        } else {
+            return $this->getCompatibilityService()->getDependencyHierarchyFallback($taskId);
+        }
+    }
+
+    /**
+     * CTE-based dependency hierarchy (for MySQL 8+ and MariaDB 10.2+)
+     */
+    private function getDependencyHierarchyCTE(string $taskId): array
+    {
+        $cacheKey = self::CACHE_PREFIX . "hierarchy_cte:{$taskId}";
         
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($taskId) {
             $sql = "
@@ -251,5 +290,40 @@ class TaskDependencyService
             'max_dependencies_per_task' => $stats[0]->max_dependencies_per_task ?? 0,
             'potential_circular_dependencies' => $circularChecks[0]->potential_circular_dependencies ?? 0,
         ];
+    }
+
+    /**
+     * Check if database supports Common Table Expressions
+     */
+    private function supportsCTE(): bool
+    {
+        if ($this->supportsCTE === null) {
+            $this->supportsCTE = $this->getCompatibilityService()->supportsCTE();
+        }
+        
+        return $this->supportsCTE;
+    }
+
+    /**
+     * Get compatibility service instance
+     */
+    private function getCompatibilityService(): TaskDependencyCompatibilityService
+    {
+        if ($this->compatibilityService === null) {
+            $this->compatibilityService = app(TaskDependencyCompatibilityService::class);
+        }
+        
+        return $this->compatibilityService;
+    }
+
+    /**
+     * Get database information and compatibility details
+     */
+    public function getDatabaseCompatibility(): array
+    {
+        $dbInfo = $this->getCompatibilityService()->getDatabaseInfo();
+        $dbInfo['cte_support_detected'] = $this->supportsCTE();
+        
+        return $dbInfo;
     }
 }
