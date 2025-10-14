@@ -116,7 +116,7 @@ class TaskCrudTest extends TestCase
         $response = $this->getJson('/api/task', $this->withAuth($user));
 
         $response->assertStatus(200);
-        $response->assertJsonCount(1); // User should only see assigned tasks
+        $response->assertJsonCount(1, 'data'); // User should only see assigned tasks
     }
 
     public function test_manager_can_view_all_tasks()
@@ -128,7 +128,7 @@ class TaskCrudTest extends TestCase
         $response = $this->getJson('/api/task', $this->withAuth($manager));
 
         $response->assertStatus(200);
-        $response->assertJsonCount(2);
+        $response->assertJsonCount(2, 'data');
     }
 
     public function test_authenticated_user_can_view_specific_task()
@@ -140,8 +140,10 @@ class TaskCrudTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJson([
-            'id' => $task->id,
-            'title' => $task->title
+            'data' => [
+                'id' => $task->id,
+                'title' => $task->title
+            ]
         ]);
     }
 
@@ -196,7 +198,7 @@ class TaskCrudTest extends TestCase
         $response = $this->getJson('/api/task?status=pending', $this->withAuth($user));
 
         $response->assertStatus(200);
-        $response->assertJsonCount(1);
+        $response->assertJsonCount(1, 'data');
     }
 
     public function test_task_filtering_by_assignee()
@@ -211,7 +213,7 @@ class TaskCrudTest extends TestCase
         $response = $this->getJson("/api/task?assignee_id={$user1->id}", $this->withAuth($manager));
 
         $response->assertStatus(200);
-        $response->assertJsonCount(1);
+        $response->assertJsonCount(1, 'data');
     }
 
     public function test_task_filtering_by_due_date_range()
@@ -232,6 +234,6 @@ class TaskCrudTest extends TestCase
         $response = $this->getJson("/api/task?from={$from}&to={$to}", $this->withAuth($user));
 
         $response->assertStatus(200);
-        $response->assertJsonCount(1);
+        $response->assertJsonCount(1, 'data');
     }
 }

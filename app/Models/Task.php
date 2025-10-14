@@ -18,7 +18,8 @@ class Task extends Model
         'status',
         'completed',
         'due_date',
-        'assignee_id'
+        'assignee_id',
+        'parent_task_id'
     ];
 
     public function setStatusAttribute(string $status): void
@@ -35,62 +36,64 @@ class Task extends Model
     }
 
     /**
-     * Get dependencies for this task (tasks that must be completed before this one)
+     * Get the parent task of this task
      */
-    public function dependencies()
+    public function parent()
     {
-        return $this->hasMany(TaskDependency::class, 'task_id');
+        return $this->belongsTo(Task::class, 'parent_task_id');
     }
 
     /**
-     * Get tasks that depend on this task
+     * Get all child tasks of this task
      */
-    public function dependents()
+    public function children()
     {
-        return $this->hasMany(TaskDependency::class, 'dependency_task_id');
+        return $this->hasMany(Task::class, 'parent_task_id');
     }
 
     /**
-     * Get all dependent tasks recursively (tasks that depend on this task)
+     * Check if this task is a parent task
      */
-    public function getAllDependentTasks(): Collection
+    public function isParent(): bool
     {
-        $dependentTasks = collect();
+        return $this->children()->exists();
+    }
 
-        // Find all direct dependents
-        $directDependents = Task::whereHas('dependencies', function ($query) {
-            $query->where('dependency_task_id', $this->id);
-        })->get();
+    /**
+     * Check if this task is a child task
+     */
+    public function isChild(): bool
+    {
+        return !is_null($this->parent_task_id);
+    }
 
-        foreach ($directDependents as $dependent) {
-            $dependentTasks->push($dependent);
-            // Recursively get all dependents
-            $dependentTasks = $dependentTasks->merge($dependent->getAllDependentTasks());
+    /**
+     * Check if all child tasks are completed
+     */
+    public function areChildrenCompleted(): bool
+    {
+        if (!$this->isParent()) {
+            return true;
         }
 
-        return new Collection($dependentTasks->unique('id')->values());
-    }
-
-    /**
-     * Get all dependency tasks with their details
-     */
-    public function getDependencyTasks()
-    {
-        return $this->dependencies()
-            ->with('dependencyTask')
-            ->get()
-            ->map(fn($dep) => $dep->dependencyTask);
-    }
-
-    /**
-     * Check if all dependencies are completed
-     */
-    public function areDependenciesCompleted(): bool
-    {
-        return !$this->dependencies()
-            ->whereHas('dependencyTask', function ($query) {
-                $query->where('status', '!=', TaskStatus::COMPLETED->value);
-            })
+        return !$this->children()
+            ->where('status', '!=', TaskStatus::COMPLETED->value)
             ->exists();
+    }
+
+    /**
+     * Validate parent-child relationship constraints
+     */
+    public function validateParentChildRelationship(): void
+    {
+        // Prevent self-reference
+        if ($this->parent_task_id === $this->id) {
+            throw new \InvalidArgumentException('Task cannot be its own parent');
+        }
+
+        // Prevent children from having their own children (no nesting)
+        if ($this->parent_task_id && $this->children()->exists()) {
+            throw new \InvalidArgumentException('Child tasks cannot have their own children');
+        }
     }
 }

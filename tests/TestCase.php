@@ -17,8 +17,8 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         // Set up environment for testing
-        config(['app.key' => 'base64:' . base64_encode(random_bytes(32))]);
-        config(['jwt.secret' => 'test-secret-key-for-jwt-that-is-long-enough-for-256-bits']);
+        $this->app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
+        $this->app['config']->set('jwt.secret', 'test-secret-key-for-jwt-that-is-long-enough-for-256-bits');
 
         // Create roles if they don't exist
         if (!Role::where('name', 'manager')->where('guard_name', 'api')->exists()) {
@@ -28,6 +28,7 @@ abstract class TestCase extends BaseTestCase
             Role::create(['name' => 'user', 'guard_name' => 'api']);
         }
     }
+
 
     protected function createManager(): User
     {

@@ -29,7 +29,7 @@ class TaskFilterAction
     {
         $user = auth()->user();
 
-        if ($user->hasRole('user')) {
+        if ($user->isUser()) {
             $this->query->where('assignee_id', $user->id);
         }
 

@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskStoreRequest;
 use App\Http\Requests\TaskUpdateRequest;
 use App\Http\Requests\TaskDependencyRequest;
+use App\Models\Task;
 use App\Services\Interfaces\TaskServiceInterface;
 use App\Traits\ResponseTrait;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
@@ -17,31 +19,46 @@ class TaskController extends Controller
     {
     }
 
-    public function store(TaskStoreRequest $request)
+    public function store(TaskStoreRequest $request): JsonResponse
     {
         if (!auth()->user()->isManager()) {
             return $this->error403('You are not authorized to create tasks');
         }
         $data = $request->validated();
-        return $this->taskService->createTask($data);
+
+        // Extract children data if present
+        $childrenData = $data['children'] ?? [];
+        unset($data['children']);
+
+        if (!empty($childrenData)) {
+            $task = $this->taskService->createTaskWithChildren($data, $childrenData);
+            return $this->success201($task, 'Task with children created successfully');
+        } else {
+            $task = $this->taskService->createTask($data);
+            return $this->success201($task, 'Task created successfully');
+        }
     }
 
     public function index()
     {
-        return $this->taskService->getTasks();
+        $result = $this->taskService->getTasks();
+        return $this->success200($result, 'Tasks fetched successfully');
     }
 
     public function show(string $id)
     {
-        return $this->taskService->getTask($id);
+        $result = $this->taskService->getTask($id);
+        return $this->success200($result, 'Task fetched successfully');
     }
 
     public function update(string $id, TaskUpdateRequest $request)
     {
         if (!auth()->user()->isManager()) {
-            return $this->error403('You are not authorized to update tasks');
+            return $this->error403('You are not authorized to update this task');
         }
-        return $this->taskService->updateTask($id, $request->validated());
+        $data = $request->validated();
+        $task = $this->taskService->updateTask($id, $data);
+        return $this->success200($task, 'Task updated successfully');
     }
 
     public function destroy(string $id)
@@ -68,11 +85,6 @@ class TaskController extends Controller
 
     public function changeTaskStatus(string $id, Request $request)
     {
-        // Only users can change task status
-        // Users can only change status of tasks assigned to them
-        if (!auth()->user()->isUser()) {
-            return $this->error403('You are not authorized to change task status');
-        }
         try {
             $status = $request->input('status');
             $this->taskService->changeTaskStatus($id, $status);
@@ -82,29 +94,30 @@ class TaskController extends Controller
         }
     }
 
-    public function addDependency(string $id, TaskDependencyRequest $request)
+    public function addChild(string $id, TaskStoreRequest $request)
     {
         if (!auth()->user()->isManager()) {
-            return $this->error403('You are not authorized to manage task dependencies');
+            return $this->error403('You are not authorized to manage child tasks');
         }
 
         try {
-            $this->taskService->addTaskDependency($id, $request->dependency_task_id);
-            return $this->success200(null, 'Task dependency added successfully');
+            $childData = $request->validated();
+            $childTask = $this->taskService->addChildTask($id, $childData);
+            return $this->success201($childTask, 'Child task added successfully');
         } catch (\Exception $e) {
             return $this->error500($e->getMessage());
         }
     }
 
-    public function removeDependency(string $id, string $dependencyId)
+    public function removeChild(string $childId)
     {
         if (!auth()->user()->isManager()) {
-            return $this->error403('You are not authorized to manage task dependencies');
+            return $this->error403('You are not authorized to manage child tasks');
         }
 
         try {
-            $this->taskService->removeTaskDependency($id, $dependencyId);
-            return $this->success200(null, 'Task dependency removed successfully');
+            $this->taskService->removeChildTask($childId);
+            return $this->success200(null, 'Child task removed successfully');
         } catch (\Exception $e) {
             return $this->error500($e->getMessage());
         }

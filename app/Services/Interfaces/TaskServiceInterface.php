@@ -33,7 +33,9 @@ interface TaskServiceInterface
 
     public function changeTaskStatus(string $id, string $status): void;
 
-    public function addTaskDependency(string $taskId, string $dependencyTaskId): void;
+    public function createTaskWithChildren(array $parentData, array $childrenData = []): Task;
 
-    public function removeTaskDependency(string $taskId, string $dependencyTaskId): void;
+    public function addChildTask(string $parentTaskId, array $childData): Task;
+
+    public function removeChildTask(string $childTaskId): void;
 }

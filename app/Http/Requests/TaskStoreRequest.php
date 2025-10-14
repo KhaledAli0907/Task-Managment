@@ -29,7 +29,13 @@ class TaskStoreRequest extends FormRequest
             'status' => ['required', 'string', Rule::in(TaskStatus::cases())],
             'completed' => 'boolean',
             'due_date' => 'nullable|date|after:now',
-            'assignee_id' => 'nullable|exists:users,id'
+            'assignee_id' => 'nullable|exists:users,id',
+            'children' => 'nullable|array',
+            'children.*.title' => 'required|string|max:255',
+            'children.*.description' => 'nullable|string',
+            'children.*.status' => ['required', 'string', Rule::in(TaskStatus::cases())],
+            'children.*.due_date' => 'nullable|date|after:now',
+            'children.*.assignee_id' => 'nullable|exists:users,id'
         ];
     }
 
@@ -47,7 +53,15 @@ class TaskStoreRequest extends FormRequest
             'status.in' => 'The task status must be one of: ' . implode(', ', array_column(TaskStatus::cases(), 'value')) . '.',
             'due_date.date' => 'The due date must be a valid date.',
             'due_date.after' => 'The due date must be a future date.',
-            'assignee_id.exists' => 'The selected assignee does not exist.'
+            'assignee_id.exists' => 'The selected assignee does not exist.',
+            'children.array' => 'Children must be an array.',
+            'children.*.title.required' => 'Each child task title is required.',
+            'children.*.title.max' => 'Each child task title may not be greater than 255 characters.',
+            'children.*.status.required' => 'Each child task status is required.',
+            'children.*.status.in' => 'Each child task status must be one of: ' . implode(', ', array_column(TaskStatus::cases(), 'value')) . '.',
+            'children.*.due_date.date' => 'Each child task due date must be a valid date.',
+            'children.*.due_date.after' => 'Each child task due date must be a future date.',
+            'children.*.assignee_id.exists' => 'The selected assignee for child task does not exist.'
         ];
     }
 }

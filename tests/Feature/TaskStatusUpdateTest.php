@@ -40,14 +40,14 @@ class TaskStatusUpdateTest extends TestCase
             'status' => TaskStatus::COMPLETED->value
         ], $this->withAuth($user));
 
-        $response->assertStatus(500)
+        $response->assertStatus(403)
             ->assertJson([
                 'success' => false,
                 'errors' => 'You can only update tasks assigned to you'
             ]);
     }
 
-    public function test_manager_cannot_update_task_status_directly()
+    public function test_manager_can_update_task_status_directly()
     {
         $manager = $this->createManager();
         $user = $this->createUser();
@@ -57,11 +57,16 @@ class TaskStatusUpdateTest extends TestCase
             'status' => TaskStatus::COMPLETED->value
         ], $this->withAuth($manager));
 
-        $response->assertStatus(403)
+        $response->assertStatus(200)
             ->assertJson([
-                'success' => false,
-                'errors' => 'You are not authorized to change task status'
+                'success' => true,
+                'message' => 'Task status changed successfully'
             ]);
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'status' => TaskStatus::COMPLETED->value
+        ]);
     }
 
     public function test_cannot_update_status_of_nonexistent_task()
@@ -72,11 +77,7 @@ class TaskStatusUpdateTest extends TestCase
             'status' => TaskStatus::COMPLETED->value
         ], $this->withAuth($user));
 
-        $response->assertStatus(500)
-            ->assertJson([
-                'success' => false,
-                'errors' => 'Task not found'
-            ]);
+        $response->assertStatus(404);
     }
 
     public function test_requires_authentication_for_status_update()

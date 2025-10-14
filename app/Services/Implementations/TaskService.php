@@ -3,6 +3,7 @@
 namespace App\Services\Implementations;
 
 use App\Actions\Tasks\TaskFilterAction;
+use App\Actions\Tasks\TaskStatusValidationAction;
 use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\TaskDependency;
@@ -11,13 +12,13 @@ use App\Services\Interfaces\TaskServiceInterface;
 use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use App\Actions\Tasks\ValidateDependencyBeforeAdding;
 use Log;
 
 class TaskService implements TaskServiceInterface
 {
-    public function __construct(protected TaskFilterAction $taskFilterAction)
-    {
+    public function __construct(
+        protected TaskFilterAction $taskFilterAction,
+    ) {
     }
     public function createTask(array $data): Task
     {
@@ -63,19 +64,9 @@ class TaskService implements TaskServiceInterface
     public function changeTaskStatus(string $id, string $status): void
     {
         $task = Task::find($id);
-        if (!$task) {
-            throw new \InvalidArgumentException('Task not found');
-        }
 
-        // Check if user can update this task
-        if (auth()->user()->isUser() && $task->assignee_id !== auth()->id()) {
-            throw new \Exception('You can only update tasks assigned to you');
-        }
-
-        // Prevent completion if dependencies not met
-        if ($status === TaskStatus::COMPLETED->value && !$task->areDependenciesCompleted()) {
-            throw new \Exception('Cannot complete task: dependencies not completed');
-        }
+        // Validate task status update
+        app(TaskStatusValidationAction::class)->handle($task, $status);
 
         DB::beginTransaction();
         try {
@@ -94,7 +85,8 @@ class TaskService implements TaskServiceInterface
     {
         $query = Task::query()->with([
             'assignee:id,name,email',
-            'dependencies:id,title,status'
+            'parent:id,title',
+            'children:id,title,status'
         ]);
 
         $tasks = $this->taskFilterAction->handle($query);
@@ -105,8 +97,9 @@ class TaskService implements TaskServiceInterface
     public function getTask(string $id): Task
     {
         return Task::findOrFail($id)->with([
-            'assignee',
-            'dependencies'
+            'assignee:id,name,email',
+            'parent:id,title',
+            'children:id,title,status'
         ])->first();
     }
 
@@ -141,64 +134,109 @@ class TaskService implements TaskServiceInterface
         }
     }
 
-    public function addTaskDependency(string $taskId, string $dependencyTaskId): void
+    public function createTaskWithChildren(array $parentData, array $childrenData = []): Task
     {
-        $task = app(ValidateDependencyBeforeAdding::class)->handle($taskId, $dependencyTaskId);
-
         DB::beginTransaction();
         try {
-            $task->dependencies()->create([
-                'dependency_task_id' => $dependencyTaskId
-            ]);
-            Log::info('Task dependency added successfully', [
-                'task_id' => $taskId,
-                'dependency_task_id' => $dependencyTaskId,
+            // Create parent task
+            $parentTask = Task::create($parentData);
+
+            // Create child tasks if provided
+            if (!empty($childrenData)) {
+                foreach ($childrenData as $childData) {
+                    $childData['parent_task_id'] = $parentTask->id;
+                    $childTask = Task::create($childData);
+                    $childTask->validateParentChildRelationship();
+                }
+            }
+
+            Log::info('Task with children created successfully', [
+                'parent_task_id' => $parentTask->id,
+                'children_count' => count($childrenData),
                 'manager' => auth()->user()->email,
                 'ip' => request()->ip()
             ]);
+
             DB::commit();
+            return $parentTask->load('children');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to add task dependency', [
+            Log::error('Failed to create task with children', [
                 'error' => $e->getMessage(),
-                'task_id' => $taskId,
-                'dependency_task_id' => $dependencyTaskId,
+                'parent_data' => $parentData,
+                'children_data' => $childrenData,
                 'manager' => auth()->user()->email,
                 'ip' => request()->ip()
             ]);
-            throw new \Exception('Failed to add task dependency');
+            throw new \Exception('Failed to create task with children');
         }
     }
 
-    public function removeTaskDependency(string $taskId, string $dependencyTaskId): void
+    public function addChildTask(string $parentTaskId, array $childData): Task
     {
-        $task = Task::findOrFail($taskId);
+        $parentTask = Task::findOrFail($parentTaskId);
 
-        $dependency = $task->dependencies()->where('dependency_task_id', $dependencyTaskId)->first();
-        if (!$dependency) {
-            throw new \InvalidArgumentException('Dependency not found');
+        // Validate that parent is not already a child
+        if ($parentTask->isChild()) {
+            throw new \InvalidArgumentException('Cannot add children to a child task');
         }
 
         DB::beginTransaction();
         try {
-            $dependency->delete();
-            Log::info('Task dependency removed successfully', [
-                'task_id' => $taskId,
-                'dependency_task_id' => $dependencyTaskId,
+            $childData['parent_task_id'] = $parentTaskId;
+            $childTask = Task::create($childData);
+            $childTask->validateParentChildRelationship();
+
+            Log::info('Child task added successfully', [
+                'parent_task_id' => $parentTaskId,
+                'child_task_id' => $childTask->id,
                 'manager' => auth()->user()->email,
                 'ip' => request()->ip()
             ]);
+
+            DB::commit();
+            return $childTask;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add child task', [
+                'error' => $e->getMessage(),
+                'parent_task_id' => $parentTaskId,
+                'child_data' => $childData,
+                'manager' => auth()->user()->email,
+                'ip' => request()->ip()
+            ]);
+            throw new \Exception('Failed to add child task');
+        }
+    }
+
+    public function removeChildTask(string $childTaskId): void
+    {
+        $childTask = Task::findOrFail($childTaskId);
+
+        if (!$childTask->isChild()) {
+            throw new \InvalidArgumentException('Task is not a child task');
+        }
+
+        DB::beginTransaction();
+        try {
+            $childTask->delete();
+
+            Log::info('Child task removed successfully', [
+                'child_task_id' => $childTaskId,
+                'manager' => auth()->user()->email,
+                'ip' => request()->ip()
+            ]);
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to remove task dependency', [
+            Log::error('Failed to remove child task', [
                 'error' => $e->getMessage(),
-                'task_id' => $taskId,
-                'dependency_task_id' => $dependencyTaskId,
+                'child_task_id' => $childTaskId,
                 'manager' => auth()->user()->email,
                 'ip' => request()->ip()
             ]);
-            throw new \Exception('Failed to remove task dependency');
+            throw new \Exception('Failed to remove child task');
         }
     }
 }
