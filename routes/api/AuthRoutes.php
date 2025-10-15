@@ -7,4 +7,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:60,1');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:api');
+
+    // Manager-only routes
+    Route::middleware(['auth:api', 'role:manager'])->group(function () {
+        Route::post('/assign-role', [AuthController::class, 'assignRole']);
+    });
 });

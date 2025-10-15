@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\PermissionEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\TaskStoreRequest;
-use App\Http\Requests\TaskUpdateRequest;
+use App\Http\Requests\Tasks\TaskStoreRequest;
+use App\Http\Requests\Tasks\TaskUpdateRequest;
 use App\Http\Requests\TaskDependencyRequest;
 use App\Models\Task;
 use App\Services\Interfaces\TaskServiceInterface;

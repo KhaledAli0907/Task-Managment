@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\PermissionEnum;
+use App\Enums\RoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -55,12 +56,17 @@ class User extends Authenticatable implements JWTSubject
 
     public function isManager(): bool
     {
-        return $this->hasRole('manager');
+        return $this->hasRole(RoleEnum::MANAGER->value);
     }
 
     public function isUser(): bool
     {
-        return $this->hasRole('user');
+        return $this->hasRole(RoleEnum::USER->value);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(RoleEnum::SUPER_ADMIN->value);
     }
 
     // Permission-based helper methods

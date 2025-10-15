@@ -69,6 +69,13 @@ abstract class TestCase extends BaseTestCase
         return $user;
     }
 
+    protected function createUserWithRole(string $role): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole($role);
+        return $user;
+    }
+
     protected function authenticateAs(User $user): string
     {
         return JWTAuth::fromUser($user);
