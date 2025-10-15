@@ -26,8 +26,13 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/documentation",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "documentation"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "documentation"
+                            ]
                         }
                     }
                 }
@@ -54,8 +59,13 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/oauth2-callback",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "oauth2-callback"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "oauth2-callback"
+                            ]
                         }
                     }
                 }
@@ -85,12 +95,18 @@
                                 ],
                                 "url": {
                                     "raw": "{{base_url}}/api/auth/register",
-                                    "host": ["{{base_url}}"],
-                                    "path": ["api", "auth", "register"]
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "register"
+                                    ]
                                 },
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n    \"name\": \"name sample value\",\n    \"email\": \"user52@example.com\",\n    \"password\": \"password sample value\",\n    \"role\": \"role sample value\",\n    \"device_token\": \"device_token sample value\"\n}",
+                                    "raw": "{\n    \"name\": \"name sample value\",\n    \"email\": \"user84@example.com\",\n    \"password\": \"password sample value\",\n    \"device_token\": \"device_token sample value\"\n}",
                                     "options": []
                                 }
                             }
@@ -118,8 +134,19 @@
                                 ],
                                 "url": {
                                     "raw": "{{base_url}}/api/auth/login",
-                                    "host": ["{{base_url}}"],
-                                    "path": ["api", "auth", "login"]
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "login"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user8@example.com\",\n    \"password\": \"password sample value\",\n    \"device_token\": \"device_token sample value\"\n}",
+                                    "options": []
                                 }
                             }
                         }
@@ -146,8 +173,62 @@
                                 ],
                                 "url": {
                                     "raw": "{{base_url}}/api/auth/logout",
-                                    "host": ["{{base_url}}"],
-                                    "path": ["api", "auth", "logout"]
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "logout"
+                                    ]
+                                },
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "assign-role",
+                    "item": [
+                        {
+                            "name": "[POST] api/auth/assign-role",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/auth/assign-role",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "assign-role"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"user_id\": \"user_id sample value\",\n    \"role\": \"role sample value\"\n}",
+                                    "options": []
                                 },
                                 "auth": {
                                     "type": "bearer",
@@ -185,12 +266,17 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task"
+                            ]
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"title\": \"title sample value\",\n    \"description\": \"description sample value\",\n    \"status\": \"status sample value\",\n    \"completed\": false,\n    \"due_date\": \"due_date sample value\",\n    \"assignee_id\": \"assignee_id sample value\",\n    \"children\": [],\n    \"children.title\": [],\n    \"children.description\": [],\n    \"children.status\": [],\n    \"children.due_date\": [],\n    \"children.assignee_id\": []\n}",
+                            "raw": "{\n    \"title\": \"title sample value\",\n    \"description\": \"description sample value\",\n    \"status\": \"status sample value\",\n    \"completed\": true,\n    \"due_date\": \"due_date sample value\",\n    \"assignee_id\": \"assignee_id sample value\",\n    \"children\": [],\n    \"children.title\": [],\n    \"children.description\": [],\n    \"children.status\": [],\n    \"children.due_date\": [],\n    \"children.assignee_id\": []\n}",
                             "options": []
                         },
                         "auth": {
@@ -222,8 +308,13 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task"
+                            ]
                         },
                         "auth": {
                             "type": "bearer",
@@ -254,8 +345,14 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task/{id}",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task", "{id}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task",
+                                "{id}"
+                            ]
                         },
                         "auth": {
                             "type": "bearer",
@@ -286,12 +383,18 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task/{id}",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task", "{id}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task",
+                                "{id}"
+                            ]
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"title\": \"title sample value\",\n    \"description\": \"description sample value\",\n    \"status\": \"status sample value\",\n    \"completed\": false,\n    \"due_date\": \"due_date sample value\",\n    \"assignee_id\": \"assignee_id sample value\"\n}",
+                            "raw": "{\n    \"title\": \"title sample value\",\n    \"description\": \"description sample value\",\n    \"status\": \"status sample value\",\n    \"completed\": true,\n    \"due_date\": \"due_date sample value\",\n    \"assignee_id\": \"assignee_id sample value\"\n}",
                             "options": []
                         },
                         "auth": {
@@ -323,8 +426,14 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/api/task/{id}",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "task", "{id}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "task",
+                                "{id}"
+                            ]
                         },
                         "auth": {
                             "type": "bearer",
@@ -361,7 +470,9 @@
                                         ],
                                         "url": {
                                             "raw": "{{base_url}}/api/task/{id}/assign",
-                                            "host": ["{{base_url}}"],
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
                                             "path": [
                                                 "api",
                                                 "task",
@@ -403,7 +514,9 @@
                                         ],
                                         "url": {
                                             "raw": "{{base_url}}/api/task/{id}/status",
-                                            "host": ["{{base_url}}"],
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
                                             "path": [
                                                 "api",
                                                 "task",
@@ -445,7 +558,9 @@
                                         ],
                                         "url": {
                                             "raw": "{{base_url}}/api/task/{id}/dependencies",
-                                            "host": ["{{base_url}}"],
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
                                             "path": [
                                                 "api",
                                                 "task",
@@ -455,7 +570,7 @@
                                         },
                                         "body": {
                                             "mode": "raw",
-                                            "raw": "{\n    \"title\": \"title sample value\",\n    \"description\": \"description sample value\",\n    \"status\": \"status sample value\",\n    \"completed\": false,\n    \"due_date\": \"due_date sample value\",\n    \"assignee_id\": \"assignee_id sample value\",\n    \"children\": [],\n    \"children.title\": [],\n    \"children.description\": [],\n    \"children.status\": [],\n    \"children.due_date\": [],\n    \"children.assignee_id\": []\n}",
+                                            "raw": "{\n    \"title\": \"title sample value\",\n    \"description\": \"description sample value\",\n    \"status\": \"status sample value\",\n    \"completed\": true,\n    \"due_date\": \"due_date sample value\",\n    \"assignee_id\": \"assignee_id sample value\",\n    \"children\": [],\n    \"children.title\": [],\n    \"children.description\": [],\n    \"children.status\": [],\n    \"children.due_date\": [],\n    \"children.assignee_id\": []\n}",
                                             "options": []
                                         },
                                         "auth": {
@@ -494,7 +609,9 @@
                                 ],
                                 "url": {
                                     "raw": "{{base_url}}/api/task/dependencies/{childId}",
-                                    "host": ["{{base_url}}"],
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
                                     "path": [
                                         "api",
                                         "task",
