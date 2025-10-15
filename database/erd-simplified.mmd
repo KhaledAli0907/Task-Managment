@@ -1,0 +1,45 @@
+erDiagram
+    users {
+        bigint id PK
+        string name
+        string email UK
+        string password
+        string device_token
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    tasks {
+        uuid id PK
+        string title
+        text description
+        enum status
+        boolean completed
+        date due_date
+        bigint assignee_id FK
+        uuid parent_task_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    roles {
+        bigint id PK
+        string name UK
+        string guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    permissions {
+        bigint id PK
+        string name UK
+        string guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Main Business Relationships
+    users ||--o{ tasks : "assigned_to"
+    tasks ||--o{ tasks : "parent_child"
+    users ||--o{ roles : "has_roles"
+    roles ||--o{ permissions : "has_permissions"

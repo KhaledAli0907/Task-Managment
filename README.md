@@ -121,6 +121,77 @@ model_has_permissions (permission_id, model_type, model_id)
 -   Self-referencing relationships for task dependencies
 -   Proper indexing for query optimization
 
+**Entity Relationship Diagram:**
+
+```mermaid
+erDiagram
+    users {
+        bigint id PK
+        string name
+        string email UK
+        string password
+        string device_token
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    tasks {
+        uuid id PK
+        string title
+        text description
+        enum status
+        boolean completed
+        date due_date
+        bigint assignee_id FK
+        uuid parent_task_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    roles {
+        bigint id PK
+        string name UK
+        string guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    permissions {
+        bigint id PK
+        string name UK
+        string guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    model_has_roles {
+        bigint role_id PK,FK
+        string model_type PK
+        bigint model_id PK
+    }
+
+    model_has_permissions {
+        bigint permission_id PK,FK
+        string model_type PK
+        bigint model_id PK
+    }
+
+    role_has_permissions {
+        bigint permission_id PK,FK
+        bigint role_id PK,FK
+    }
+
+    %% Core Relationships
+    users ||--o{ tasks : "assigns"
+    tasks ||--o{ tasks : "parent-child"
+    users ||--o{ model_has_roles : "has_roles"
+    roles ||--o{ model_has_roles : "assigned_to_users"
+    users ||--o{ model_has_permissions : "has_permissions"
+    permissions ||--o{ model_has_permissions : "assigned_to_users"
+    roles ||--o{ role_has_permissions : "has_permissions"
+    permissions ||--o{ role_has_permissions : "belongs_to_roles"
+```
+
 ### API Design
 
 **RESTful Endpoints:**

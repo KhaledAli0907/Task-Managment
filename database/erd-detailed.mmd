@@ -1,0 +1,91 @@
+erDiagram
+    users {
+        bigint id PK "Primary Key, Auto Increment"
+        string name "User's full name"
+        string email UK "Unique email address"
+        timestamp email_verified_at "Email verification timestamp"
+        string password "Hashed password"
+        string device_token "Device token for push notifications"
+        string remember_token "Remember me token"
+        timestamp created_at "Record creation timestamp"
+        timestamp updated_at "Record update timestamp"
+    }
+
+    tasks {
+        uuid id PK "Primary Key, UUID"
+        string title "Task title"
+        text description "Task description"
+        enum status "pending, in_progress, completed, archived"
+        boolean completed "Task completion flag"
+        date due_date "Task due date"
+        bigint assignee_id FK "Foreign key to users.id"
+        uuid parent_task_id FK "Self-referencing foreign key"
+        timestamp created_at "Record creation timestamp"
+        timestamp updated_at "Record update timestamp"
+    }
+
+    roles {
+        bigint id PK "Primary Key, Auto Increment"
+        string name UK "Role name (manager, user, super_admin)"
+        string guard_name "Guard name (api)"
+        timestamp created_at "Record creation timestamp"
+        timestamp updated_at "Record update timestamp"
+    }
+
+    permissions {
+        bigint id PK "Primary Key, Auto Increment"
+        string name UK "Permission name (TASK_CREATE, TASK_READ, etc.)"
+        string guard_name "Guard name (api)"
+        timestamp created_at "Record creation timestamp"
+        timestamp updated_at "Record update timestamp"
+    }
+
+    model_has_roles {
+        bigint role_id PK,FK "Foreign key to roles.id"
+        string model_type PK "Model type (App\\Models\\User)"
+        bigint model_id PK "Foreign key to users.id"
+    }
+
+    model_has_permissions {
+        bigint permission_id PK,FK "Foreign key to permissions.id"
+        string model_type PK "Model type (App\\Models\\User)"
+        bigint model_id PK "Foreign key to users.id"
+    }
+
+    role_has_permissions {
+        bigint permission_id PK,FK "Foreign key to permissions.id"
+        bigint role_id PK,FK "Foreign key to roles.id"
+    }
+
+    password_reset_tokens {
+        string email PK "User email address"
+        string token "Password reset token"
+        timestamp created_at "Token creation timestamp"
+    }
+
+    sessions {
+        string id PK "Session ID"
+        bigint user_id FK "Foreign key to users.id"
+        string ip_address "User IP address"
+        text user_agent "User agent string"
+        longtext payload "Session data"
+        int last_activity "Last activity timestamp"
+    }
+
+    %% Core Relationships
+    users ||--o{ tasks : "assigns"
+    tasks ||--o{ tasks : "parent-child"
+
+    %% Role and Permission Relationships
+    users ||--o{ model_has_roles : "has_roles"
+    roles ||--o{ model_has_roles : "assigned_to_users"
+
+    users ||--o{ model_has_permissions : "has_permissions"
+    permissions ||--o{ model_has_permissions : "assigned_to_users"
+
+    roles ||--o{ role_has_permissions : "has_permissions"
+    permissions ||--o{ role_has_permissions : "belongs_to_roles"
+
+    %% Session and Auth Relationships
+    users ||--o{ sessions : "creates_sessions"
+    users ||--o{ password_reset_tokens : "requests_reset"

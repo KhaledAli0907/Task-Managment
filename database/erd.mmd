@@ -1,0 +1,87 @@
+erDiagram
+    users {
+        bigint id PK
+        string name
+        string email UK
+        timestamp email_verified_at
+        string password
+        string device_token
+        string remember_token
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    tasks {
+        uuid id PK
+        string title
+        text description
+        enum status
+        boolean completed
+        date due_date
+        bigint assignee_id FK
+        uuid parent_task_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    roles {
+        bigint id PK
+        string name UK
+        string guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    permissions {
+        bigint id PK
+        string name UK
+        string guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    model_has_roles {
+        bigint role_id PK,FK
+        string model_type PK
+        bigint model_id PK
+    }
+
+    model_has_permissions {
+        bigint permission_id PK,FK
+        string model_type PK
+        bigint model_id PK
+    }
+
+    role_has_permissions {
+        bigint permission_id PK,FK
+        bigint role_id PK,FK
+    }
+
+    password_reset_tokens {
+        string email PK
+        string token
+        timestamp created_at
+    }
+
+    sessions {
+        string id PK
+        bigint user_id FK
+        string ip_address
+        text user_agent
+        longtext payload
+        int last_activity
+    }
+
+    %% Relationships
+    users ||--o{ tasks : "assigns"
+    tasks ||--o{ tasks : "parent-child"
+    users ||--o{ model_has_roles : "has"
+    users ||--o{ model_has_permissions : "has"
+    users ||--o{ sessions : "creates"
+    users ||--o{ password_reset_tokens : "requests"
+
+    roles ||--o{ model_has_roles : "assigned_to"
+    roles ||--o{ role_has_permissions : "has"
+
+    permissions ||--o{ model_has_permissions : "assigned_to"
+    permissions ||--o{ role_has_permissions : "belongs_to"
